@@ -10,6 +10,8 @@ The goal of this project is to understand how New Zealand's kiwifruit industry h
 
 The dataset used in this project is based on the Stats NZ Agricultural Production Statistics table:
 
+Source: Stats NZ Agricultural Production Statistics: Year to June 2024 final.
+
 **Kiwifruit canopy area hectares by variety, 2007–2024**
 
 The dataset includes:
@@ -64,6 +66,19 @@ The data shows a major industry shift from green kiwifruit toward gold kiwifruit
 
 Green kiwifruit canopy area declined over time, while gold kiwifruit canopy area grew strongly and became the largest variety by canopy area.
 
+## Visuals
+
+### Kiwifruit Canopy Area by Variety
+
+![Kiwifruit Canopy Area Line Chart](visuals/kiwifruit_canopy_area_line_chart.png)
+
+### Kiwifruit Canopy Area Share by Variety
+
+![Kiwifruit Canopy Area Share Chart](visuals/kiwifruit_canopy_area_share_chart.png)
+
+### Total Kiwifruit Canopy Area by Variety
+
+![Kiwifruit Canopy Area Stacked Bar Chart](visuals/kiwifruit_canopy_area_stacked_bar_chart.png)
 ## Status
 
 This project is currently in progress.
