@@ -39,6 +39,34 @@ This project explores the following questions:
 - Jupyter Notebook
 - VS Code
 
+## How to Run This Project
+
+1. Clone the repository:
+
+```bash
+git clone git@github.com:chrisbigdog/nz-kiwifruit-canopy-analysis.git
+```
+
+2. Move into the project folder:
+
+```bash
+cd nz-kiwifruit-canopy-analysis
+```
+
+3. Install the required Python packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+4. Open the notebook:
+
+```bash
+jupyter notebook notebooks/01_kiwifruit_canopy_analysis.ipynb
+```
+
+Or open the project in VS Code and run the notebook using a Python environment with the required packages installed.
+
 ## Project Structure
 
 ```text
