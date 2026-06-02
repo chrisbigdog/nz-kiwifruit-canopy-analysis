@@ -67,6 +67,19 @@ jupyter notebook notebooks/01_kiwifruit_canopy_analysis.ipynb
 
 Or open the project in VS Code and run the notebook using a Python environment with the required packages installed.
 
+## How to Run the Streamlit Dashboard
+
+To launch the interactive dashboard, run:
+
+```bash
+streamlit run streamlit_app.py
+```
+
+Then open the local URL shown in the terminal, usually:
+
+```text
+http://localhost:8501
+```
 ## Project Structure
 
 ```text
