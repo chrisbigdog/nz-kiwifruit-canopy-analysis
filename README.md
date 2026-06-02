@@ -5,7 +5,11 @@
 This data science project analyses New Zealand kiwifruit canopy area trends from 2007 to 2024 using public data from Stats NZ.
 
 The goal of this project is to understand how New Zealand's kiwifruit industry has changed over time, especially the shift between green, gold, and other kiwifruit varieties.
+## Live Dashboard
 
+View the interactive Streamlit dashboard here:
+
+https://nz-kiwifruit-canopy-analysis.streamlit.app/
 ## Dataset
 
 The dataset used in this project is based on the Stats NZ Agricultural Production Statistics table:
