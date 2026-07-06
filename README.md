@@ -10,6 +10,19 @@ The goal of this project is to understand how New Zealand's kiwifruit industry h
 View the interactive Streamlit dashboard here:
 
 https://nz-kiwifruit-canopy-analysis.streamlit.app/
+
+## Interactive Dashboard Features
+
+The live dashboard includes interactive controls that help users explore the data:
+
+* Select a custom year range
+* Choose one or more kiwifruit varieties
+* View charts and insights that update automatically
+* Preview the filtered dataset
+* Download the filtered dataset as a CSV file
+
+The dashboard is designed to help users explore national kiwifruit canopy-area trends more easily.
+
 ## Dataset
 
 The dataset used in this project is based on the Stats NZ Agricultural Production Statistics table:
