@@ -1,8 +1,8 @@
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
-import matplotlib.pyplot as plt
 
 
 # Page configuration
@@ -12,45 +12,134 @@ st.set_page_config(
     layout="wide",
 )
 
+PROJECT_ROOT = Path(__file__).resolve().parent
+
 
 # Load data
 @st.cache_data
 def load_data():
-    data_path = Path("data/kiwifruit_canopy_area_processed.csv")
-    return pd.read_csv(data_path)
+    data_path = PROJECT_ROOT / "data" / "kiwifruit_canopy_area_processed.csv"
+    return pd.read_csv(data_path).sort_values("year")
 
 
 df = load_data()
 
+variety_area_columns = {
+    "Green Kiwifruit": "green_kiwifruit",
+    "Gold Kiwifruit": "gold_kiwifruit",
+    "Other Kiwifruit": "other_kiwifruit",
+}
 
-# App title
+variety_share_columns = {
+    "Green Kiwifruit": "green_share_pct",
+    "Gold Kiwifruit": "gold_share_pct",
+    "Other Kiwifruit": "other_share_pct",
+}
+
+variety_options = list(variety_area_columns)
+
+min_year = int(df["year"].min())
+max_year = int(df["year"].max())
+
+
+# Sidebar controls
+with st.sidebar:
+    st.header("Dashboard Controls")
+
+    selected_year_range = st.slider(
+        "Select year range",
+        min_value=min_year,
+        max_value=max_year,
+        value=(min_year, max_year),
+        step=1,
+    )
+
+    selected_varieties = st.multiselect(
+        "Select kiwifruit varieties",
+        options=variety_options,
+        default=variety_options,
+    )
+
+    st.caption(
+        "These controls update the table, charts, insights, and downloadable dataset."
+    )
+
+
+start_year, end_year = selected_year_range
+
+filtered_df = df[
+    df["year"].between(start_year, end_year)
+].copy()
+
+if not selected_varieties:
+    st.warning("Select at least one kiwifruit variety from the sidebar to continue.")
+    st.stop()
+
+
+# Dashboard heading
 st.title("🥝 New Zealand Kiwifruit Canopy Area Analysis")
-st.subheader("2007–2024")
+st.subheader(f"{start_year}–{end_year}")
 
 st.write(
     """
-    This dashboard explores New Zealand kiwifruit canopy area trends using public data from Stats NZ.
-    The goal is to understand how green, gold, and other kiwifruit varieties have changed over time.
+    Explore New Zealand kiwifruit canopy area trends using public Stats NZ data.
+    Use the sidebar to focus on a period or varieties that interest you.
     """
 )
 
+st.divider()
 
-# Latest year metrics
-latest_year = df.iloc[-1]
+
+# Latest-year metrics
+latest_year = filtered_df.iloc[-1]
+
+selected_latest_area = sum(
+    latest_year[variety_area_columns[variety]]
+    for variety in selected_varieties
+)
+
+leading_variety = max(
+    selected_varieties,
+    key=lambda variety: latest_year[variety_area_columns[variety]],
+)
 
 st.header("Latest Year Summary")
 
 col1, col2, col3, col4 = st.columns(4)
 
-col1.metric("Year", int(latest_year["year"]))
-col2.metric("Total Canopy Area", f"{latest_year['total_canopy_area']:,.0f} ha")
-col3.metric("Gold Kiwifruit Share", f"{latest_year['gold_share_pct']:.2f}%")
-col4.metric("Green Kiwifruit Share", f"{latest_year['green_share_pct']:.2f}%")
+col1.metric("Latest Year", int(latest_year["year"]))
+col2.metric(
+    "Total Industry Canopy Area",
+    f"{latest_year['total_canopy_area']:,.0f} ha",
+)
+col3.metric(
+    "Selected Varieties Area",
+    f"{selected_latest_area:,.0f} ha",
+)
+col4.metric("Leading Selected Variety", leading_variety)
+
+st.divider()
 
 
-# Dataset preview
-st.header("Dataset Preview")
-st.dataframe(df)
+# Dataset preview and download
+st.header("Filtered Dataset")
+
+st.dataframe(
+    filtered_df,
+    use_container_width=True,
+    hide_index=True,
+)
+
+filtered_csv = filtered_df.to_csv(index=False).encode("utf-8")
+
+st.download_button(
+    label="Download filtered dataset as CSV",
+    data=filtered_csv,
+    file_name=f"kiwifruit_canopy_{start_year}_{end_year}.csv",
+    mime="text/csv",
+)
+
+st.divider()
 
 
 # Canopy area line chart
@@ -58,17 +147,25 @@ st.header("Canopy Area by Variety")
 
 fig, ax = plt.subplots(figsize=(10, 6))
 
-ax.plot(df["year"], df["green_kiwifruit"], marker="o", label="Green Kiwifruit")
-ax.plot(df["year"], df["gold_kiwifruit"], marker="o", label="Gold Kiwifruit")
-ax.plot(df["year"], df["other_kiwifruit"], marker="o", label="Other Kiwifruit")
+for variety in selected_varieties:
+    ax.plot(
+        filtered_df["year"],
+        filtered_df[variety_area_columns[variety]],
+        marker="o",
+        label=variety,
+    )
 
-ax.set_title("New Zealand Kiwifruit Canopy Area by Variety, 2007–2024")
+ax.set_title(f"New Zealand Kiwifruit Canopy Area by Variety, {start_year}–{end_year}")
 ax.set_xlabel("Year")
 ax.set_ylabel("Canopy Area (hectares)")
+ax.set_xticks(filtered_df["year"])
 ax.legend()
 ax.grid(True, alpha=0.3)
 
-st.pyplot(fig)
+st.pyplot(fig, use_container_width=True)
+plt.close(fig)
+
+st.divider()
 
 
 # Percentage share chart
@@ -76,66 +173,101 @@ st.header("Percentage Share by Variety")
 
 fig, ax = plt.subplots(figsize=(10, 6))
 
-ax.plot(df["year"], df["green_share_pct"], marker="o", label="Green Kiwifruit Share")
-ax.plot(df["year"], df["gold_share_pct"], marker="o", label="Gold Kiwifruit Share")
-ax.plot(df["year"], df["other_share_pct"], marker="o", label="Other Kiwifruit Share")
+for variety in selected_varieties:
+    ax.plot(
+        filtered_df["year"],
+        filtered_df[variety_share_columns[variety]],
+        marker="o",
+        label=f"{variety} Share",
+    )
 
-ax.set_title("New Zealand Kiwifruit Canopy Area Share by Variety, 2007–2024")
+ax.set_title(f"New Zealand Kiwifruit Canopy Area Share by Variety, {start_year}–{end_year}")
 ax.set_xlabel("Year")
 ax.set_ylabel("Share of Total Canopy Area (%)")
+ax.set_xticks(filtered_df["year"])
 ax.legend()
 ax.grid(True, alpha=0.3)
 
-st.pyplot(fig)
+st.pyplot(fig, use_container_width=True)
+plt.close(fig)
+
+st.divider()
 
 
 # Stacked bar chart
-st.header("Total Canopy Area by Variety")
+st.header("Total Canopy Area by Selected Variety")
 
 fig, ax = plt.subplots(figsize=(10, 6))
 
-ax.bar(df["year"], df["green_kiwifruit"], label="Green Kiwifruit")
-ax.bar(
-    df["year"],
-    df["gold_kiwifruit"],
-    bottom=df["green_kiwifruit"],
-    label="Gold Kiwifruit",
-)
-ax.bar(
-    df["year"],
-    df["other_kiwifruit"],
-    bottom=df["green_kiwifruit"] + df["gold_kiwifruit"],
-    label="Other Kiwifruit",
-)
+bottom = pd.Series(0, index=filtered_df.index, dtype="float64")
 
-ax.set_title("Total New Zealand Kiwifruit Canopy Area by Variety, 2007–2024")
+for variety in selected_varieties:
+    values = filtered_df[variety_area_columns[variety]]
+
+    ax.bar(
+        filtered_df["year"],
+        values,
+        bottom=bottom,
+        label=variety,
+    )
+
+    bottom += values
+
+ax.set_title(f"Total Canopy Area by Selected Variety, {start_year}–{end_year}")
 ax.set_xlabel("Year")
 ax.set_ylabel("Canopy Area (hectares)")
+ax.set_xticks(filtered_df["year"])
 ax.legend()
 ax.grid(axis="y", alpha=0.3)
 
-st.pyplot(fig)
+st.pyplot(fig, use_container_width=True)
+plt.close(fig)
+
+st.divider()
 
 
-# Insights
+# Dynamic insights
 st.header("Key Insights")
 
-st.write(
-    """
-    - Gold kiwifruit canopy area increased strongly between 2007 and 2024.
-    - Green kiwifruit canopy area declined compared with 2007.
-    - Gold kiwifruit became the largest variety by canopy area.
-    - Other kiwifruit varieties remained much smaller but increased in recent years.
-    """
+first_year = filtered_df.iloc[0]
+
+for variety in selected_varieties:
+    first_value = first_year[variety_area_columns[variety]]
+    latest_value = latest_year[variety_area_columns[variety]]
+    change = latest_value - first_value
+
+    if change > 0:
+        direction = "increased"
+    elif change < 0:
+        direction = "decreased"
+    else:
+        direction = "remained unchanged"
+
+    st.markdown(
+        f"- **{variety}:** canopy area {direction} by "
+        f"**{abs(change):,.0f} hectares** between {start_year} and {end_year}."
+    )
+
+st.markdown(
+    f"- **Leading selected variety in {int(latest_year['year'])}:** "
+    f"{leading_variety}."
 )
+
+st.info(
+    "This dashboard shows national canopy-area trends. "
+    "It does not represent individual orchard performance or farm-level yield."
+)
+
+st.divider()
 
 
 # Data source
 st.header("Data Source")
 
-st.write(
+st.markdown(
     """
-    Data source: Stats NZ Agricultural Production Statistics  
-    Table: Kiwifruit canopy area hectares by variety, 2007–2024
+    **Source:** Stats NZ Agricultural Production Statistics
+
+**Table:** Kiwifruit canopy area hectares by variety, 2007–2024
     """
 )
